@@ -202,29 +202,25 @@ model = BertForSequenceClassification.from_pretrained(
 Initializes a BERT-based sequence classification model.
 
 ```python
-metric = evaluate.load("accuracy")
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-def compute_metrics(eval_pred):
-    logits, labels = eval_pred
-    predictions = np.argmax(logits, axis=-1)
+def compute_metrics(pred):
+    logits, labels = pred
+    preds = np.argmax(logits, axis=-1)
     
     # Compute accuracy
-    accuracy = metric.compute(predictions=predictions, references=labels)
+    accuracy = accuracy_score(labels, preds)
     
     # Compute precision, recall, and F1-score
-    true_positives = np.sum((predictions == 1) & (labels == 1))
-    false_positives = np.sum((predictions == 1) & (labels == 0))
-    false_negatives = np.sum((predictions == 0) & (labels == 1))
-    
-    precision = true_positives / (true_positives + false_positives + 1e-8)
-    recall = true_positives / (true_positives + false_negatives + 1e-8)
-    f1_score = 2 * (precision * recall) / (precision + recall + 1e-8)
+    macro_precision = precision_score(labels, preds, average='macro')
+    macro_recall = recall_score(labels, preds, average='macro')
+    macro_f1 = f1_score(labels, preds, average='macro')
     
     return {
-        "accuracy": accuracy["accuracy"],
-        "precision": precision,
-        "recall": recall,
-        "f1_score": f1_score
+        "accuracy": accuracy,
+        "precision": macro_precision,
+        "recall": macro_recall,
+        "f1_score": macro_f1
     }
 
 training_args = TrainingArguments(output_dir="test_trainer", evaluation_strategy="epoch")
@@ -249,14 +245,15 @@ print(predictions.predictions.shape, predictions.label_ids.shape)
 
 eval_metrics = compute_metrics((predictions.predictions, predictions.label_ids))
 print("Accuracy:", eval_metrics["accuracy"])
-print("Precision:", eval_metrics["precision"])
-print("Recall:", eval_metrics["recall"])
-print("F1 Score:", eval_metrics["f1_score"])
+print("Macro Precision:", eval_metrics["precision"])
+print("Macro Recall:", eval_metrics["recall"])
+print("Macro F1 Score:", eval_metrics["f1_score"])
 ```
 Make predictions on the test dataset using the trained model and compute evaluation metrics based on the predictions and true labels.
 The testing accuracy is around 90%.
 
-<img width="400" alt="Screenshot 2024-03-06 at 13 58 17" src="https://github.com/ThomasWongHY/bert_sentiment_analysis/assets/86035047/ff508c66-6888-4d48-b28a-80ab437625c9">
+<img width="400" alt="Screenshot 2024-03-16 at 21 03 05" src="https://github.com/ThomasWongHY/bert_sentiment_analysis/assets/86035047/e44f7611-6138-423b-91ec-a63941ec7ac9">
+
 
 
 # Reference:
